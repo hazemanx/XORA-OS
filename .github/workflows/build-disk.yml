@@ -15,6 +15,13 @@ on:
         options:
           - amd64
           - arm64
+  # A change to the ISO settings alone rebuilds the ISOs from the existing images.
+  push:
+    branches:
+      - main
+    paths:
+      - 'disk_config/**'
+      - '.github/workflows/build-disk.yml'
   # Build fresh ISOs after the images are rebuilt by a push to main.
   workflow_run:
     workflows: ["Build container image"]
@@ -30,14 +37,16 @@ env:
   BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   build:
     name: Build disk images (${{ matrix.hardware }}, ${{ matrix.disk-type }})
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
-    runs-on: ${{ inputs.platform == 'arm64' && 'ubuntu-26.04-arm' || 'ubuntu-26.04' }}
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    # Stay on Ubuntu 24.04: on the 26.04 runners osbuild fails with
+    # "mount: /run/osbuild/tree/dev: permission denied" (osbuild/osbuild#2579).
+    runs-on: ${{ inputs.platform == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -126,3 +135,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rclone
           rclone copy $SOURCE_DIR S3:${{ secrets.S3_BUCKET_NAME }}
+
+  report:
+    name: Report results
+    needs: build
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Publish results to the ci-logs branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/scripts/report.sh "disk-${{ github.event_name }}"

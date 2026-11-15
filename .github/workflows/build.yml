@@ -11,6 +11,8 @@ on:
       - main
     paths-ignore:
       - '**/README.md'
+      - 'disk_config/**'
+      - '.github/workflows/build-disk.yml'
   workflow_dispatch:
 
 env:
@@ -172,3 +174,20 @@ jobs:
           # use old bundle format, so we can use newer cosign 3.X.X instead of 2.X.X
           cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY ${IMAGE_REGISTRY}/${IMAGE_NAME}@${DIGEST}
 
+  report:
+    name: Report results
+    needs: build_push
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Publish results to the ci-logs branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/scripts/report.sh "image"
