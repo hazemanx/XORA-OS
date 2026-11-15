@@ -12,7 +12,7 @@ builds its own image and its own ISO, so drivers never mix.
 | Product | Image | Status |
 |---|---|---|
 | PC (AMD/Intel graphics) | `xora-os-pc` | Building |
-| Intel Mac 2013-2017 | `xora-os-mac-intel` | Building, Wi-Fi and camera drivers not added yet |
+| Intel Mac 2013-2017 | `xora-os-mac-intel` | Building, Wi-Fi driver added, FaceTime HD camera driver not added yet |
 | Framework | `xora-os-framework` | Planned |
 | PC (NVIDIA) | `xora-os-nvidia` | Planned |
 | Intel Mac 2018-2020 (T2) | `xora-os-mac-t2` | Planned |
