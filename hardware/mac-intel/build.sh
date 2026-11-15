@@ -14,18 +14,25 @@ KERNEL="$(rpm -q kernel-core --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' | h
 echo "Image kernel: ${KERNEL}"
 
 mapfile -t WL_RPMS < <(find /akmods -name 'kmod-wl-*.rpm' | sort)
-mapfile -t ADDON_RPMS < <(find /akmods -name 'ublue-os-akmods-addons*.rpm' | sort)
 
 if [[ "${#WL_RPMS[@]}" -eq 0 ]]; then
     echo "No Broadcom wl driver found in the akmods image. It contains:"
     find /akmods -name '*.rpm' | sort
     exit 1
 fi
-echo "Driver packages: ${WL_RPMS[*]} ${ADDON_RPMS[*]}"
+echo "Driver packages: ${WL_RPMS[*]}"
 
-# The driver is built for one exact kernel. If this install fails on a kernel
+# The kernel module needs its companion package (broadcom-wl, which provides
+# wl-kmod-common). That lives in RPM Fusion, which the base image does not
+# carry. Add the RPM Fusion repos for this one install, then remove them so
+# they are not left enabled on the finished image.
+FEDORA="$(rpm -E %fedora)"
+dnf5 install -y \
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA}.noarch.rpm" \
+    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${FEDORA}.noarch.rpm"
+
+# The driver is built for one exact kernel. If this fails on a kernel
 # dependency, the base image and the akmods image are out of step.
-if ! dnf5 install -y "${ADDON_RPMS[@]}" "${WL_RPMS[@]}"; then
-    echo "Retrying with the RPM Fusion repos enabled"
-    dnf5 install -y --enablerepo='*rpmfusion*' "${ADDON_RPMS[@]}" "${WL_RPMS[@]}"
-fi
+dnf5 install -y broadcom-wl "${WL_RPMS[@]}"
+
+dnf5 remove -y rpmfusion-free-release rpmfusion-nonfree-release
