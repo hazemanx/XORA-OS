@@ -1,27 +1,30 @@
 #!/bin/bash
+# XORA OS image build. Runs inside the container build, once per product.
+# HARDWARE picks the product folder in hardware/ (pc, mac-intel, ...).
 
 set -ouex pipefail
+
+HARDWARE="${HARDWARE:-pc}"
 
 # Copy the contents of system_files/ of the git repo to /
 cp -avf "/ctx/system_files"/. /
 
-### Install packages
+# Shared XORA layer: the same on every product.
+for script in /ctx/[0-9][0-9]-*.sh; do
+    echo "::group:: ${script}"
+    bash "${script}"
+    echo "::endgroup::"
+done
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/43/x86_64/repoview/index.html&protocol=https&redirect=1
+# Hardware layer: only this product's folder is used.
+if [[ ! -f "/ctx/hardware/${HARDWARE}/build.sh" ]]; then
+    echo "Unknown hardware product: ${HARDWARE}"
+    exit 1
+fi
+echo "::group:: hardware/${HARDWARE}"
+HARDWARE="${HARDWARE}" bash "/ctx/hardware/${HARDWARE}/build.sh"
+echo "::endgroup::"
 
-# this installs a package from fedora repos
-dnf5 install -y tmux
-
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
-
-#### Example for enabling a System Unit File
-
-systemctl enable podman.socket
+# Record which product this image is, for the installer and Software Update.
+mkdir -p /usr/share/xora
+echo "${HARDWARE}" > /usr/share/xora/hardware
