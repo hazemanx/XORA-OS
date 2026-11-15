@@ -1,0 +1,11 @@
+workflow: Build disk images
+event: workflow_run
+run_number: 8
+run_attempt: 1
+sha: 0597512754448c6e1eceb09960f5cecef8a2b15e
+reported_at: 2026-11-15T19:50:47Z
+jobs:
+  success	Build disk images (mac-intel, anaconda-iso)
+  success	Build disk images (mac-intel, qcow2)
+  success	Build disk images (pc, anaconda-iso)
+  success	Build disk images (pc, qcow2)
