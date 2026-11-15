@@ -1,0 +1,4 @@
+# Default root filesystem for XORA OS installs.
+# The ISO and disk image builder reads this from the image itself.
+[install.filesystem.root]
+type = "btrfs"
