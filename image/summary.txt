@@ -1,9 +1,9 @@
 workflow: Build container image
 event: schedule
-run_number: 11
+run_number: 12
 run_attempt: 1
 sha: 0597512754448c6e1eceb09960f5cecef8a2b15e
-reported_at: 2026-11-16T20:21:18Z
+reported_at: 2026-11-17T19:12:30Z
 jobs:
   success	Build and push image (pc)
   success	Build and push image (mac-intel)
