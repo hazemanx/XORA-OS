@@ -1,8 +1,8 @@
 workflow: Build disk images
 event: workflow_run
-run_number: 20
+run_number: 21
 run_attempt: 1
 sha: 0597512754448c6e1eceb09960f5cecef8a2b15e
-reported_at: 2026-11-27T19:34:49Z
+reported_at: 2026-11-28T18:13:55Z
 jobs:
   skipped	Build disk images (${{ matrix.hardware }}, ${{ matrix.disk-type }})
